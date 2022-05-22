@@ -19,7 +19,13 @@ async function run() {
          await client.connect();
          const wheelCollection = client.db('wheelManufacture').collection('wheels');
 
-         
+         //get all wheels
+         app.get('/wheels', async(req, res) =>{
+            const query = {};
+            const cursor = wheelCollection.find(query);
+            const wheels = await cursor.toArray();
+            res.send(wheels);
+        });
 
     }
     finally {
