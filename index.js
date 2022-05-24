@@ -27,6 +27,14 @@ async function run() {
             res.send(wheels);
         });
 
+        //find single wheel via id
+        app.get('/wheel/:id', async(req, res) =>{
+            const id = req.params.id;
+            const query={_id: ObjectId(id)};
+            const wheel = await wheelCollection.findOne(query);
+            res.send(wheel);
+        });
+
     }
     finally {
 
