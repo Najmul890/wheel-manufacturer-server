@@ -18,6 +18,7 @@ async function run() {
     try {
          await client.connect();
          const wheelCollection = client.db('wheelManufacture').collection('wheels');
+         const orderCollection= client.db('wheelManufacture').collection('orders');
 
          //get all wheels
          app.get('/wheels', async(req, res) =>{
@@ -34,6 +35,13 @@ async function run() {
             const wheel = await wheelCollection.findOne(query);
             res.send(wheel);
         });
+
+        //post api to create a order
+        app.post('/placeOrder', async (req, res) => {
+            const order = req.body;
+            const result = await orderCollection.insertOne(order);
+            res.send(result);
+        })
 
     }
     finally {
