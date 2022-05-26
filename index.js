@@ -51,7 +51,13 @@ async function run() {
             res.send({accessToken});
         })
 
-        //create user api
+        //get all users
+        app.get('/users', verifyJWT, async (req, res) => {
+            const users = await userCollection.find().toArray();
+            res.send(users);
+          });
+
+        //create user api via email
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
