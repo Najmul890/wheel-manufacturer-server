@@ -42,6 +42,18 @@ async function run() {
         const orderCollection = client.db('wheelManufacture').collection('orders');
         const userCollection = client.db('wheelManufacture').collection('users');
 
+        //verify admin
+        const verifyAdmin = async (req, res, next) => {
+            const requester = req.decoded.email;
+            const requesterAccount = await userCollection.findOne({ email: requester });
+            if (requesterAccount.role === 'admin') {
+                next();
+            }
+            else {
+                res.status(403).send({ message: 'forbidden' });
+            }
+        }
+
         //authentication post api
         app.post('/login', async (req, res) => {
             const user = req.body;
@@ -56,6 +68,14 @@ async function run() {
             const users = await userCollection.find().toArray();
             res.send(users);
         });
+
+        //check an user is admin
+        app.get('/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email });
+            const isAdmin = user.role === 'admin';
+            res.send({ admin: isAdmin })
+        })
 
 
         //create admin api
