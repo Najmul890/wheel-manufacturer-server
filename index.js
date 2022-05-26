@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const ObjectId = require('mongodb').ObjectId;
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const app = express();
@@ -39,6 +40,7 @@ async function run() {
          await client.connect();
          const wheelCollection = client.db('wheelManufacture').collection('wheels');
          const orderCollection= client.db('wheelManufacture').collection('orders');
+         const userCollection= client.db('wheelManufacture').collection('users');
 
          //authentication post api
         app.post('/login', async(req,res)=>{
@@ -48,6 +50,21 @@ async function run() {
             });
             res.send({accessToken});
         })
+
+        //create user api
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+              $set: user,
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            res.send({ result, token });
+          });
+      
 
          //get all wheels
          app.get('/wheels', async(req, res) =>{
@@ -72,7 +89,7 @@ async function run() {
             res.send(result);
         })
 
-        //get products for a specific user via user email
+        //get orders for a specific user via user email
         app.get('/myOrders',verifyJWT, async (req, res) => {
             const decodedEmail= req.decoded.email;
             const email=req.query.email;
