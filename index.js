@@ -13,20 +13,20 @@ app.use(cors());
 app.use(express.json());
 
 //verify token
-const verifyJWT=(req,res,next)=>{
-    const authHeader=req.headers.authorization;
-    if(!authHeader){
-        return res.status(401).send({message: 'Unauthorized Access'})
+const verifyJWT = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).send({ message: 'Unauthorized Access' })
     }
     const token = authHeader.split(' ')[1];
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded)=>{
-        if(err){
-            return res.status(403).send({message: 'Forbidden Access'});
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(403).send({ message: 'Forbidden Access' });
         }
         req.decoded = decoded;
         next();
     })
-    
+
 }
 
 
@@ -37,25 +37,37 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 async function run() {
     try {
-         await client.connect();
-         const wheelCollection = client.db('wheelManufacture').collection('wheels');
-         const orderCollection= client.db('wheelManufacture').collection('orders');
-         const userCollection= client.db('wheelManufacture').collection('users');
+        await client.connect();
+        const wheelCollection = client.db('wheelManufacture').collection('wheels');
+        const orderCollection = client.db('wheelManufacture').collection('orders');
+        const userCollection = client.db('wheelManufacture').collection('users');
 
-         //authentication post api
-        app.post('/login', async(req,res)=>{
-            const user=req.body;
-            const accessToken= jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-               expiresIn: '1d' 
+        //authentication post api
+        app.post('/login', async (req, res) => {
+            const user = req.body;
+            const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+                expiresIn: '1d'
             });
-            res.send({accessToken});
+            res.send({ accessToken });
         })
 
         //get all users
         app.get('/users', verifyJWT, async (req, res) => {
             const users = await userCollection.find().toArray();
             res.send(users);
-          });
+        });
+
+
+        //create admin api
+        app.put('/user/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const updateDoc = {
+                $set: { role: 'admin' },
+            };
+            const result = await userCollection.updateOne(filter, updateDoc);
+            res.send(result);
+        })
 
         //create user api via email
         app.put('/user/:email', async (req, res) => {
@@ -64,16 +76,16 @@ async function run() {
             const filter = { email: email };
             const options = { upsert: true };
             const updateDoc = {
-              $set: user,
+                $set: user,
             };
             const result = await userCollection.updateOne(filter, updateDoc, options);
             const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
             res.send({ result, token });
-          });
-      
+        });
 
-         //get all wheels
-         app.get('/wheels', async(req, res) =>{
+
+        //get all wheels
+        app.get('/wheels', async (req, res) => {
             const query = {};
             const cursor = wheelCollection.find(query);
             const wheels = await cursor.toArray();
@@ -81,9 +93,9 @@ async function run() {
         });
 
         //find single wheel via id
-        app.get('/wheel/:id', async(req, res) =>{
+        app.get('/wheel/:id', async (req, res) => {
             const id = req.params.id;
-            const query={_id: ObjectId(id)};
+            const query = { _id: ObjectId(id) };
             const wheel = await wheelCollection.findOne(query);
             res.send(wheel);
         });
@@ -96,17 +108,17 @@ async function run() {
         })
 
         //get orders for a specific user via user email
-        app.get('/myOrders',verifyJWT, async (req, res) => {
-            const decodedEmail= req.decoded.email;
-            const email=req.query.email;
-            
-            if(email===decodedEmail){
-                const query = {userEmail:email};
+        app.get('/myOrders', verifyJWT, async (req, res) => {
+            const decodedEmail = req.decoded.email;
+            const email = req.query.email;
+
+            if (email === decodedEmail) {
+                const query = { userEmail: email };
                 const cursor = orderCollection.find(query);
                 const orders = await cursor.toArray();
                 res.send(orders);
-            }else{
-                res.status(403).send({message: 'Forbidden Access'});
+            } else {
+                res.status(403).send({ message: 'Forbidden Access' });
             }
         })
 
