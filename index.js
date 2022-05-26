@@ -54,17 +54,10 @@ async function run() {
             }
         }
 
-        //authentication post api
-        app.post('/login', async (req, res) => {
-            const user = req.body;
-            const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-                expiresIn: '1d'
-            });
-            res.send({ accessToken });
-        })
+        
 
         //get all users
-        app.get('/users', verifyJWT, async (req, res) => {
+        app.get('/users', async (req, res) => {
             const users = await userCollection.find().toArray();
             res.send(users);
         });
@@ -133,14 +126,21 @@ async function run() {
             const email = req.query.email;
 
             if (email === decodedEmail) {
-                const query = { userEmail: email };
+                const query = { email: email };
                 const cursor = orderCollection.find(query);
                 const orders = await cursor.toArray();
+                
                 res.send(orders);
             } else {
                 res.status(403).send({ message: 'Forbidden Access' });
             }
         })
+
+        //get all orders
+        app.get('/orders', async (req, res) => {
+            const orders = await orderCollection.find().toArray();
+            res.send(orders);
+          })
 
     }
     finally {
