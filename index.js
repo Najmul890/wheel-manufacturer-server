@@ -41,6 +41,7 @@ async function run() {
         const wheelCollection = client.db('wheelManufacture').collection('wheels');
         const orderCollection = client.db('wheelManufacture').collection('orders');
         const userCollection = client.db('wheelManufacture').collection('users');
+        const reviewCollection = client.db('wheelManufacture').collection('reviews');
 
         //verify admin
         const verifyAdmin = async (req, res, next) => {
@@ -54,7 +55,7 @@ async function run() {
             }
         }
 
-        
+
 
         //get all users
         app.get('/users', async (req, res) => {
@@ -72,7 +73,7 @@ async function run() {
 
 
         //create admin api
-        app.put('/user/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
+        app.put('/user/admin/:email', async (req, res) => {
             const email = req.params.email;
             const filter = { email: email };
             const updateDoc = {
@@ -113,6 +114,13 @@ async function run() {
             res.send(wheel);
         });
 
+        //post a wheel
+        app.post('/wheel', async (req, res) => {
+            const wheel = req.body;
+            const result = await wheelCollection.insertOne(wheel);
+            res.send(result);
+        })
+
         //post api to create a order
         app.post('/placeOrder', async (req, res) => {
             const order = req.body;
@@ -129,7 +137,7 @@ async function run() {
                 const query = { email: email };
                 const cursor = orderCollection.find(query);
                 const orders = await cursor.toArray();
-                
+
                 res.send(orders);
             } else {
                 res.status(403).send({ message: 'Forbidden Access' });
@@ -140,7 +148,20 @@ async function run() {
         app.get('/orders', async (req, res) => {
             const orders = await orderCollection.find().toArray();
             res.send(orders);
-          })
+        })
+
+        //post a review
+        app.post('/addAReview', async (req, res) => {
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review);
+            res.send(result);
+        })
+
+        //get all reviews
+        app.get('/reviews', async (req,res)=>{
+            const reviews = await reviewCollection.find().toArray();
+            res.send(reviews);
+        })
 
     }
     finally {
