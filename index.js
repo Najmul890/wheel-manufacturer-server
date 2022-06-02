@@ -159,6 +159,22 @@ async function run() {
             res.send(order);
         });
 
+        //update a order info as payment completed
+        app.patch('/patch/:id', verifyJWT, async(req, res) =>{
+            const id  = req.params.id;
+            const payment = req.body;
+            const filter = {_id: ObjectId(id)};
+            const updatedDoc = {
+              $set: {
+                paid: true,
+                transactionId: payment.transactionId
+              }
+            }
+      
+            const updatedOrder = await orderCollection.updateOne(filter, updatedDoc);
+            res.send(updatedOrder);
+          })
+
         //post a review
         app.post('/addAReview', async (req, res) => {
             const review = req.body;
@@ -173,22 +189,17 @@ async function run() {
         })
 
         //create stripe payment-intent api
-        app.post("/create-payment-intent", async (req, res) => {
+        app.post('/create-payment-intent', verifyJWT, async(req, res) =>{
             const order = req.body;
-            const price= order.price;
-            const amount =price*100;
-        
-            // Create a PaymentIntent with the order amount and currency
+            const price = order.totalPrice;
+            const amount = price*100;
             const paymentIntent = await stripe.paymentIntents.create({
-                amount: amount,
-                currency: "usd",
-                payment_methods_types:['card']
+              amount : amount,
+              currency: 'usd',
+              payment_method_types:['card']
             });
-
-            res.send({
-                clientSecret: paymentIntent.client_secret
-            });
-        });
+            res.send({clientSecret: paymentIntent.client_secret})
+          });
 
     }
     finally {
