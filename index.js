@@ -160,10 +160,11 @@ async function run() {
         });
 
         //update a order info as payment completed
-        app.patch('/patch/:id', verifyJWT, async(req, res) =>{
+        app.put('/order/:id', verifyJWT, async(req, res) =>{
             const id  = req.params.id;
             const payment = req.body;
             const filter = {_id: ObjectId(id)};
+            const options = { upsert: true };
             const updatedDoc = {
               $set: {
                 paid: true,
@@ -171,7 +172,8 @@ async function run() {
               }
             }
       
-            const updatedOrder = await orderCollection.updateOne(filter, updatedDoc);
+            //const result = await paymentCollection.insertOne(payment);
+            const updatedOrder = await orderCollection.updateOne(filter, updatedDoc, options);
             res.send(updatedOrder);
           })
 
