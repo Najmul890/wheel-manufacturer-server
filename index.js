@@ -44,17 +44,17 @@ async function run() {
         const userCollection = client.db('wheelManufacture').collection('users');
         const reviewCollection = client.db('wheelManufacture').collection('reviews');
 
-        //verify admin
-        const verifyAdmin = async (req, res, next) => {
-            const requester = req.decoded.email;
-            const requesterAccount = await userCollection.findOne({ email: requester });
-            if (requesterAccount.role === 'admin') {
-                next();
-            }
-            else {
-                res.status(403).send({ message: 'forbidden' });
-            }
-        }
+        // //verify admin
+        // const verifyAdmin = async (req, res, next) => {
+        //     const requester = req.decoded.email;
+        //     const requesterAccount = await userCollection.findOne({ email: requester });
+        //     if (requesterAccount.role === 'admin') {
+        //         next();
+        //     }
+        //     else {
+        //         res.status(403).send({ message: 'forbidden' });
+        //     }
+        // }
 
 
 
@@ -159,31 +159,50 @@ async function run() {
             res.send(order);
         });
 
-        //cancel a order
-        app.delete('/order/:id', async(req, res) =>{
+        //cancel or delete an order
+        app.delete('/order/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {_id: ObjectId(id)};
+            const query = { _id: ObjectId(id) };
             const result = await orderCollection.deleteOne(query);
             res.send(result);
         })
 
-        
 
-        app.patch('/order/:id', verifyJWT, async(req, res) =>{
-            const id  = req.params.id;
+        //update an order status as payment completed
+        app.patch('/order/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
             const payment = req.body;
-            const filter = {_id: ObjectId(id)};
+            const filter = { _id: ObjectId(id) };
             const updatedDoc = {
-              $set: {
-                paid: true,
-                transactionId: payment.transactionId
-              }
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
             }
-      
-            
+
+
             const updatedOrder = await orderCollection.updateOne(filter, updatedDoc);
             res.send(updatedOrder);
-          })
+        })
+
+
+        //update an order status as order shifted
+        app.patch('/orderStatus/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const orderStatus = req.body;
+            
+            const filter = { _id: ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    status: orderStatus.status,
+                    
+                }
+            }
+
+
+            const updatedStatus = await orderCollection.updateOne(filter, updatedDoc);
+            res.send(updatedStatus);
+        })
 
         //post a review
         app.post('/addAReview', async (req, res) => {
@@ -199,17 +218,17 @@ async function run() {
         })
 
         //create stripe payment-intent api
-        app.post('/create-payment-intent', verifyJWT, async(req, res) =>{
+        app.post('/create-payment-intent', verifyJWT, async (req, res) => {
             const order = req.body;
             const price = order.totalPrice;
-            const amount = price*100;
+            const amount = price * 100;
             const paymentIntent = await stripe.paymentIntents.create({
-              amount : amount,
-              currency: 'usd',
-              payment_method_types:['card']
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
             });
-            res.send({clientSecret: paymentIntent.client_secret})
-          });
+            res.send({ clientSecret: paymentIntent.client_secret })
+        });
 
     }
     finally {
