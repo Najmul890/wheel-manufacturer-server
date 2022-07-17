@@ -4,7 +4,9 @@
 
 Live Site [https://wheel-manufacturing-ltd.web.app/](https://wheel-manufacturing-ltd.web.app/)
 
-Client side repository: [https://github.com/programming-hero-web-course1/manufacturer-website-client-side-Najmul890](https://github.com/programming-hero-web-course1/manufacturer-website-client-side-Najmul890)
+Client side repository: [https://github.com/Najmul890/wheel-manufacturer-client](https://github.com/Najmul890/wheel-manufacturer-client)
+
+## Note: To access admin dashboard please use, email: admin88whm@gmail.com  password: admin88whm
 
 ## Project Overview
   - It is a wholesale product selling website which has own manufactured wheels.
