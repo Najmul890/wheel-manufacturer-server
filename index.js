@@ -122,6 +122,15 @@ async function run() {
             res.send(result);
         })
 
+        //delete a wheel
+        app.delete('/wheel/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await wheelCollection.deleteOne(query);
+            res.send(result);
+        })
+
+
         //post api to create a order
         app.post('/placeOrder', async (req, res) => {
             const order = req.body;
